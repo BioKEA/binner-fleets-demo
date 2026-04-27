@@ -1,0 +1,11 @@
+name: graphbin2
+repo: https://github.com/metagentools/GraphBin2
+install:
+  method: pip
+  package: graphbin2
+cli:
+  pattern: "graphbin2 --graph {gfa} --contigs {contigs} --binned {seed_csv} --output {outdir}"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: true
+needs_taxonomy: false

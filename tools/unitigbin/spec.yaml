@@ -1,0 +1,12 @@
+name: unitigbin
+repo: https://github.com/metagentools/UnitigBin
+install:
+  method: git
+  url: https://github.com/metagentools/UnitigBin
+  extra: "research code; verify upstream URL at install time"
+cli:
+  pattern: "python unitigbin.py --graph {gfa} --contigs {contigs} --output {outdir}"
+output_format: clusters_tsv
+base_image: torch
+needs_assembly_graph: true
+needs_taxonomy: false

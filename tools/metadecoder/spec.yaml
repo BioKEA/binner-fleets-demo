@@ -1,0 +1,11 @@
+name: metadecoder
+repo: https://github.com/liu-congcong/MetaDecoder
+install:
+  method: pip
+  package: metadecoder
+cli:
+  pattern: "metadecoder cluster -f {contigs} -c {depth} -s {seed_genes} -o {outdir}/bin"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

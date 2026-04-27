@@ -1,0 +1,13 @@
+name: metabat2
+version: "2.15"
+repo: https://bitbucket.org/berkeleylab/metabat
+install:
+  method: conda
+  channel: bioconda
+  package: metabat2
+cli:
+  pattern: "metabat2 -i {contigs} -a {depth} -o {outdir}/bin -m 1500 --seed 42"
+output_format: per_bin_fasta
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

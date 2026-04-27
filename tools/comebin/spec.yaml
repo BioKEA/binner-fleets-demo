@@ -1,0 +1,13 @@
+name: comebin
+repo: https://github.com/ziyewang/COMEBin
+install:
+  method: conda
+  channel: bioconda
+  package: comebin
+  extra: "use upstream environment.yaml if conda fails"
+cli:
+  pattern: "run_comebin.sh -a {contigs} -p {bam} -o {outdir} -t 8"
+output_format: per_bin_fasta
+base_image: torch
+needs_assembly_graph: false
+needs_taxonomy: false

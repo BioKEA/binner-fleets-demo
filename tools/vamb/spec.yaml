@@ -1,0 +1,11 @@
+name: vamb
+repo: https://github.com/RasmussenLab/vamb
+install:
+  method: pip
+  package: vamb
+cli:
+  pattern: "vamb bin default --outdir {outdir} --fasta {contigs} --bamfiles {bam}"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

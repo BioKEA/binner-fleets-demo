@@ -1,0 +1,12 @@
+name: metawrap
+repo: https://github.com/bxlab/metaWRAP
+install:
+  method: conda
+  channel: ursky
+  package: metawrap-mg
+cli:
+  pattern: "metawrap bin_refinement -A {bins_a} -B {bins_b} -C {bins_c} -c 50 -x 10 -o {outdir}"
+output_format: per_bin_fasta
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

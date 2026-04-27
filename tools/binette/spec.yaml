@@ -1,0 +1,11 @@
+name: binette
+repo: https://github.com/genotoul-bioinfo/Binette
+install:
+  method: pip
+  package: Binette
+cli:
+  pattern: "binette --bin_dirs {bin_dirs} --contigs {contigs} --outdir {outdir}"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

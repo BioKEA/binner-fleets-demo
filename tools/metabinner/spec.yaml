@@ -1,0 +1,12 @@
+name: metabinner
+repo: https://github.com/ziyewang/MetaBinner
+install:
+  method: git
+  url: https://github.com/ziyewang/MetaBinner
+  extra: "clone and pip install . in container"
+cli:
+  pattern: "run_MetaBinner.sh -a {contigs} -o {outdir} -d {depth} -t 8 -p $PWD"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

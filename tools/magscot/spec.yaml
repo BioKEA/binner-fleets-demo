@@ -1,0 +1,12 @@
+name: magscot
+repo: https://github.com/ikmb/MAGScoT
+install:
+  method: conda
+  channel: bioconda
+  package: magscot
+cli:
+  pattern: "MAGScoT.R -i {contigs_to_bin_tsv} --hmm {bact_hmm} -o {outdir}/biokea"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

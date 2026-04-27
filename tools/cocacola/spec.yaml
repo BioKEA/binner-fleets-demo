@@ -1,0 +1,12 @@
+name: cocacola
+repo: https://github.com/younglululu/COCACOLA
+install:
+  method: git
+  url: https://github.com/younglululu/COCACOLA
+  extra: "Python 2 + old C++; use python2-legacy base image"
+cli:
+  pattern: "python COCACOLA.py --contig_file {contigs} --abundance_profiles {depth} --composition_profiles {kmer} --output {outdir}"
+output_format: clusters_tsv
+base_image: python2-legacy
+needs_assembly_graph: false
+needs_taxonomy: false

@@ -1,0 +1,12 @@
+name: das_tool
+repo: https://github.com/cmks/DAS_Tool
+install:
+  method: conda
+  channel: bioconda
+  package: das_tool
+cli:
+  pattern: "DAS_Tool -i {bin_set_tsvs} -c {contigs} -o {outdir} --search_engine diamond --write_bins"
+output_format: per_bin_fasta
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

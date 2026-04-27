@@ -1,0 +1,11 @@
+name: metacoag
+repo: https://github.com/metagentools/MetaCoAG
+install:
+  method: pip
+  package: metacoag
+cli:
+  pattern: "metacoag --assembler spades --graph {gfa} --contigs {contigs} --abundance {depth} --output {outdir}"
+output_format: per_bin_fasta
+base_image: default
+needs_assembly_graph: true
+needs_taxonomy: false

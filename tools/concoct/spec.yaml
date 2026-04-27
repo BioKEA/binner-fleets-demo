@@ -1,0 +1,12 @@
+name: concoct
+repo: https://github.com/BinPro/CONCOCT
+install:
+  method: conda
+  channel: bioconda
+  package: concoct
+cli:
+  pattern: "cut_up_fasta.py {contigs} -c 10000 -o 0 --merge_last -b cuts.bed > cuts.fa && concoct_coverage_table.py cuts.bed {bam} > cov.tsv && concoct --composition_file cuts.fa --coverage_file cov.tsv -b {outdir}"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

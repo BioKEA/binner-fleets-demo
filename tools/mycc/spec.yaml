@@ -1,0 +1,12 @@
+name: mycc
+repo: https://sourceforge.net/projects/sb2nhri/files/MyCC
+install:
+  method: tarball
+  url: https://sourceforge.net/projects/sb2nhri/files/MyCC/MyCC.tar.gz
+  extra: "Python 2 only; use python2-legacy base image"
+cli:
+  pattern: "MyCC.py {contigs} 56mer"
+output_format: per_bin_fasta
+base_image: python2-legacy
+needs_assembly_graph: false
+needs_taxonomy: false

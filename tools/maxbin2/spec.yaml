@@ -1,0 +1,12 @@
+name: maxbin2
+repo: https://sourceforge.net/projects/maxbin2
+install:
+  method: conda
+  channel: bioconda
+  package: maxbin2
+cli:
+  pattern: "run_MaxBin.pl -contig {contigs} -abund {depth} -out {outdir}/bin -thread 8"
+output_format: per_bin_fasta
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

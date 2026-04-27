@@ -1,0 +1,11 @@
+name: taxvamb
+repo: https://github.com/RasmussenLab/vamb
+install:
+  method: pip
+  package: "vamb>=5"
+cli:
+  pattern: "vamb bin taxvamb --taxonomy {tax_tsv} --outdir {outdir} --fasta {contigs} --bamfiles {bam}"
+output_format: clusters_tsv
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: true

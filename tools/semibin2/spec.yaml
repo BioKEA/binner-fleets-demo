@@ -1,0 +1,11 @@
+name: semibin2
+repo: https://github.com/BigDataBiology/SemiBin
+install:
+  method: pip
+  package: SemiBin
+cli:
+  pattern: "SemiBin2 single_easy_bin -i {contigs} -b {bam} -o {outdir} --environment global"
+output_format: per_bin_fasta
+base_image: default
+needs_assembly_graph: false
+needs_taxonomy: false

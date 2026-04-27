@@ -1,0 +1,11 @@
+name: graphmb
+repo: https://github.com/MicrobialDarkMatter/GraphMB
+install:
+  method: pip
+  package: graphmb
+cli:
+  pattern: "graphmb --assembly {data_dir} --outdir {outdir} --markers {markers}"
+output_format: clusters_tsv
+base_image: torch
+needs_assembly_graph: true
+needs_taxonomy: false

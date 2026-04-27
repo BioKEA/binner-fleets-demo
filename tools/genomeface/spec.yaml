@@ -1,0 +1,13 @@
+name: genomeface
+repo: https://github.com/jgi-genomeface/genomeface
+install:
+  method: conda
+  channel: conda-forge
+  package: genomeface
+  extra: "verify upstream repo URL; downloads ~5GB pretrained model on first run"
+cli:
+  pattern: "genomeface --contigs {contigs} --depth {depth} --output {outdir}"
+output_format: per_bin_fasta
+base_image: torch
+needs_assembly_graph: false
+needs_taxonomy: false

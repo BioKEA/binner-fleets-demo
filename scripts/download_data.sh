@@ -12,6 +12,10 @@ if [[ ! -d data/strong100 ]]; then
     cd data/strong100
     curl -L -o strong100.zip "https://zenodo.org/record/6122610/files/strong100.zip"
     unzip -q strong100.zip
+    # Zip extracts to a nested ./strong100/ — flatten if so
+    if [[ -d strong100 && ! -f assembly.fasta ]]; then
+        mv strong100/* . && rmdir strong100
+    fi
     rm strong100.zip
     cd ../..
 fi

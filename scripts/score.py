@@ -41,18 +41,43 @@ def load_contig_markers(path: Path) -> dict[str, set[str]]:
     return contig_markers
 
 
-def score_binset(bs: BinSet, contig_markers: dict[str, set[str]]) -> tuple[int, int, list[int]]:
-    """Return (total_unique_markers, n_bins, per_bin_marker_counts)."""
+NC_THRESHOLD = 80   # Near-complete: ≥80 unique Pfam markers (≈ ≥80% complete prokaryote)
+MQ_THRESHOLD = 40   # Medium-quality: 40–79
+
+
+def score_binset(bs: BinSet, contig_markers: dict[str, set[str]]) -> dict:
+    """Compute per-bin marker counts and aggregate MIMAG-style score.
+
+    Aggregate score = 2 * n_NC_bins + n_MQ_bins.
+    This rewards complete genomes (NC bins, ≥80 markers), gives partial credit for
+    medium-quality (40–79), and ignores low-quality fragments (<40). It punishes
+    over-fragmentation: splitting one good genome into 20 singletons drops most of
+    them below the MQ threshold and yields zero score.
+    """
     bin_to_contigs: dict[str, list[str]] = defaultdict(list)
     for a in bs.assignments:
         bin_to_contigs[a.bin_id].append(a.contig_id)
     per_bin = []
+    n_nc = 0
+    n_mq = 0
     for bin_id, contigs in bin_to_contigs.items():
         markers: set[str] = set()
         for c in contigs:
             markers |= contig_markers.get(c, set())
-        per_bin.append(len(markers))
-    return sum(per_bin), len(per_bin), per_bin
+        n = len(markers)
+        per_bin.append(n)
+        if n >= NC_THRESHOLD:
+            n_nc += 1
+        elif n >= MQ_THRESHOLD:
+            n_mq += 1
+    score = 2 * n_nc + n_mq
+    return {
+        "score": score,
+        "n_bins": len(per_bin),
+        "n_nc": n_nc,
+        "n_mq": n_mq,
+        "per_bin": per_bin,
+    }
 
 
 def render_leaderboard(scores: dict[str, int], out_png: Path) -> None:
@@ -67,8 +92,8 @@ def render_leaderboard(scores: dict[str, int], out_png: Path) -> None:
     ax.barh(range(len(tools)), vals, color=colors)
     ax.set_yticks(range(len(tools)))
     ax.set_yticklabels(tools)
-    ax.set_xlabel("Total unique single-copy marker Pfams across bins (proxy for total MAG quality)")
-    ax.set_title("Binner Leaderboard — STRONG100 (marker-gene proxy)")
+    ax.set_xlabel("Score = 2 × NC bins + MQ bins  (NC: ≥80 unique Pfam markers; MQ: 40–79)")
+    ax.set_title("Binner Leaderboard — STRONG100 (MIMAG-proxy via marker genes)")
     ax.invert_yaxis()
     plt.tight_layout()
     plt.savefig(out_png, dpi=150)
@@ -93,23 +118,18 @@ def main() -> int:
     for pq_path in parquet_files:
         tool = pq_path.parent.name
         bs = BinSet.from_parquet(pq_path)
-        total, n_bins, per_bin = score_binset(bs, contig_markers)
-        scores[tool] = total
-        details[tool] = {
-            "wave": pq_path.parent.parent.name,
-            "n_bins": n_bins,
-            "total_markers": total,
-            "mean_markers_per_bin": (total / n_bins) if n_bins else 0,
-            "per_bin": per_bin,
-        }
+        result = score_binset(bs, contig_markers)
+        scores[tool] = result["score"]
+        details[tool] = {"wave": pq_path.parent.parent.name, **result}
 
     (SCORE_DIR / "leaderboard.json").write_text(json.dumps({"scores": scores, "details": details}, indent=2))
     render_leaderboard(scores, SCORE_DIR / "leaderboard.png")
 
-    print(f"\nLeaderboard:")
+    print(f"\nLeaderboard (score = 2*NC + MQ):")
     for t, v in sorted(scores.items(), key=lambda x: x[1], reverse=True):
         marker = " *" if t in ("biokea-v0", "biokea") else ""
-        print(f"  {v:>6}  {t}{marker}")
+        d = details[t]
+        print(f"  {v:>4}  {t:<20s}  ({d['n_nc']} NC + {d['n_mq']} MQ of {d['n_bins']} bins){marker}")
     print(f"\nWritten: {SCORE_DIR / 'leaderboard.png'}")
     return 0
 

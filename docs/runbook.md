@@ -1,6 +1,6 @@
-# Recording Day Runbook — Binner Fleets Demo (v2: chat-centric)
+# Recording Day Runbook — Binner Fleets Demo
 
-This is the operator's hands-on script. **Single window, chat-centric.** The Fleets-style fan-out happens inside a Claude Code chat session via Claude's Task tool; sub-agents appear in the `/agents` "Running" tab, which is the hero shot.
+This is the operator's hands-on script for recording the demo. The canary dry-run **is** the take — no rehearsal.
 
 ---
 
@@ -9,223 +9,242 @@ This is the operator's hands-on script. **Single window, chat-centric.** The Fle
 ```bash
 cd /Users/seanjungbluth/Desktop/binner-fleets-demo
 
-git status                  # → clean
-git pull --ff-only          # → up to date
-git branch -D wave1 2>/dev/null; for b in $(git branch --list 'wave1/*'); do git branch -D "$b" 2>/dev/null; done
-rm -rf output/
+# Verify clean state
+git status                                    # → clean
+git pull --ff-only                            # → up to date
+git branch -D wave1 wave1/* 2>/dev/null || true   # delete any stale local branches
+rm -rf output/                                 # clean prior run artifacts
 
-# Verify
+# Verify Docker images
 docker images | grep biokea-binner-base | wc -l   # → 20
-ls .claude/skills/integrate-binner/SKILL.md       # → exists
-ls data/strong100/assembly.fasta                   # → OK
+
+# Verify data
+ls data/strong100/assembly.fasta data/strong100/assembly_graph.gfa
+ls data/5G_metaSPAdes/
+
+# Verify dispatch + monitoring works end-to-end (single test session — kill before recording)
+claude --bg "sleep for 30"
+# Note the session id printed (e.g., 5c6621fc). Output shows:
+#   claude agents             list sessions
+#   claude attach <id>        open in this terminal
+#   claude logs <id>          show recent output
+#   claude kill <id>          stop this session
+
+# Open the Fleets table view in another bare shell:
+#   $ claude agents
+# You should see the test session there. If yes, mechanism is confirmed.
+# Kill: claude kill <session-id>     (or 'k' from inside the TUI)
 ```
 
-Kill any stale claude processes from earlier botched dispatch:
-```bash
-pkill -f 'claude -p' 2>&1; pkill -f 'dispatch_wave' 2>&1
-```
+If all green: proceed.
 
 ---
 
-## 1. Window setup
+## 1. Two-window setup
 
-**Just one window.** A wide terminal running Claude Code in chat mode, in the repo directory.
+### Window 1 — DISPATCHER (left or top, ~40% of screen)
+- A regular terminal (Ghostty / iTerm / Terminal).
+- `cd /Users/seanjungbluth/Desktop/binner-fleets-demo`
+- This is where you run the dispatch scripts: `dispatch_wave1.sh`, `dispatch_wave2.sh`, `dispatch_wave3.sh`, `score.py`.
+- Also where you peek-and-reply unblocks (in this build, peeks may land here or in Window 2 depending on the EAP build).
 
-```bash
-cd /Users/seanjungbluth/Desktop/binner-fleets-demo
-claude
-```
+### Window 2 — `claude agents` HERO (right or bottom, ~60% of screen)
+- A **bare shell** (Ghostty / iTerm / Terminal). Do NOT enter a Claude Code chat session here.
+- `cd /Users/seanjungbluth/Desktop/binner-fleets-demo` (so it picks up `.claude/skills/`).
+- Run **`claude agents`** directly from the shell prompt. This is the **CLI subcommand** that opens the interactive TUI table view of all backgrounded `claude --bg` sessions managed by the daemon.
+- Color-coded session states, `space`-to-peek, `enter`-to-attach.
 
-You'll be at the chat prompt. Make the terminal large — when you `/agents` to peek, the table view fills the screen.
+**IMPORTANT — there are two different "agents" views in Claude Code; do NOT confuse them:**
+- **`claude agents`** (CLI subcommand from bare shell) = **the Fleets table view** ✅ This is what we want.
+- **`/agents`** (slash command from inside an active Claude Code chat) = shows in-session **subagents** dispatched via the Task tool — NOT the same thing. ❌ This will appear empty during the demo.
 
 ### Recording
+- Easiest on macOS without OBS: **Cmd+Shift+5 → Record selected portion → drag a box that covers BOTH windows**. Click "Record" right before you start dispatch.
+- Audio: enable mic if you want voiceover, disable if you'll add VO post.
+- Backup: in a third terminal, `script -q /tmp/binner-fleets-recording.cast` to text-capture commands as failover.
+- Save location: `~/Desktop/binner-fleets-demo-take1.mov` (date-stamp manually after).
 
-`Cmd+Shift+5` → Record Selected Portion → drag a box covering the terminal. Audio on for VO. Save to `~/Desktop/binner-fleets-demo-take2.mov`.
+If you do have OBS: install with `brew install --cask obs`; configure a single scene with display capture; start record there instead.
 
 ---
 
-## 2. The take — 4 prompts you read on camera
+## 2. Recording sequence (the take)
 
-**Time-lapse all wait phases in editing.** Total real wall-clock: ~60–90 min.
+**Total wall-clock estimate: 50–90 minutes.** Time-lapsed in editing.
 
-### Beat 1 — Cold open (~15 s)
-- Camera on. You're at the empty Claude chat prompt.
-- Voiceover: *"This is BioKEA's binner-fleets-demo. We're about to integrate 16 metagenome binners in parallel by asking Claude to fan out 16 sub-agents from this single chat. Watch."*
-- Type `/agents`. Confirm "Running" tab is empty. Esc.
+### Beat 1 — Cold open (~25s)
+```
+[Window 2]  claude agents
+```
+- Empty table appears. Voiceover or written caption: *"This is Claude Fleets. We're about to integrate 16 metagenome binners in parallel."*
 
-### Beat 2 — Wave 1 prompt (~15 s to type)
+### Beat 2 — Dispatch Wave 1 (~30s)
+```
+[Window 1]  bash scripts/dispatch_wave1.sh
+```
+- 16 sessions appear in Window 2's table within ~3 seconds, all yellow/working.
 
-Type this prompt in the chat (paste the whole block — multi-line is fine):
+### Beat 3 — Reading the table (~20s)
+- Narrate the columns: state icon (color), session id, one-line summary.
+- Color overlay caption (post-edit): "🟡 working   🟢 done   🟠 blocked   🔴 failed"
+
+### Beat 4 — Quiet shepherding (~15–20 min — TIME-LAPSE in edit)
+- Sessions start completing. Greens trickle in. Most cached-image tools (metabat2, concoct, etc.) finish in ~30–90s. Heavier ones (comebin, graphmb) take 5–10 min.
+- Counter overlay (post-edit): `n done / n blocked / n working`.
+
+### Beat 5 — First planned-block: VAMB (~3–5 min real-time)
+When `vamb` goes 🟠 (amber):
+1. **Window 2:** select the vamb session, press `space` to peek.
+2. Read the error in the peek panel. It says something like `pycoverm metadata-generation-failed`.
+3. Reply (paste from `docs/install-postmortems.md` Planned-block #1 — the ~7-line Dockerfile replacement):
 
 ```
-I need to integrate 16 metagenome binners into BioKEA's binner-fleets-demo
-repo. Use the integrate-binner skill at .claude/skills/integrate-binner/SKILL.md
-for each. Dispatch sub-agents in two batches of 8, in parallel within each
-batch, to avoid saturating Docker on the host:
-
-BATCH 1 (dispatch first, in parallel):
-  metabat2, concoct, maxbin2, vamb, semibin2, comebin, genomeface, taxvamb
-
-BATCH 2 (dispatch after BATCH 1's 8 sub-agents complete, in parallel):
-  metabinner, metadecoder, graphbin2, metacoag, graphmb, unitigbin, mycc, cocacola
-
-For each tool, the sub-agent should:
-1. Read tools/<tool>/spec.yaml
-2. docker build using the existing docker/<tool>/Dockerfile (most images are
-   already cached locally as biokea-binner-base:1.0-<tool>)
-3. Smoke-test on data/5G_metaSPAdes/
-4. Run on data/strong100/
-5. Parse output to BinSet (biokea/schema.py) and write to
-   output/wave1/<tool>/bins.parquet
-6. Write biokea/binners/<tool>.py adapter (~50 LOC implementing BinnerAdapter)
-7. Commit to a wave1/<tool> sub-branch
-
-vamb and taxvamb will fail with a pycoverm/Rust error — when that happens,
-those sub-agents will report the failure. I'll provide the unblock fix
-inline at that point. Begin.
-```
-
-Hit Enter.
-
-### Beat 3 — Watch the fan-out (~5 s after Enter)
-- Claude will respond with a brief plan, then start dispatching sub-agents (you'll see Task tool calls in the chat output).
-- Type `/agents` (use Tab/Esc tactically — see below).
-- The "Running" tab fills with 8 sub-agents (Batch 1) within ~3 seconds.
-- Color-coded states. **This is the hero shot.**
-- Esc to return to chat.
-
-### Beat 4 — Quiet shepherding (~15–20 min for Batch 1)
-- While Batch 1 runs, periodically `/agents` to peek at the table.
-- Cached-image tools (metabat2, concoct, maxbin2, semibin2, comebin, genomeface) finish in ~30–90 s.
-- vamb and taxvamb will block. **Stay calm.** When they report failure (Claude will surface in chat), continue to Beat 5.
-
-### Beat 5 — Vamb unblock (~5 min real-time)
-When Claude reports vamb failed (pycoverm metadata-generation), reply in chat:
-
-```
-For vamb: replace docker/vamb/Dockerfile with this content, then rebuild
-the image and re-run the integrate-binner skill:
+Replace docker/vamb/Dockerfile with this content, then rebuild:
 
 FROM biokea-binner-base:1.0
 USER root
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && . "$HOME/.cargo/env"
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+    && . "$HOME/.cargo/env"
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN pip install --no-cache-dir maturin
 RUN pip install --no-cache-dir vamb
 WORKDIR /work
-
-Apply the same pattern to taxvamb (last line: pip install "vamb>=5"). Both
-should work after the rebuild.
 ```
 
-Claude's sub-agent for vamb (and taxvamb) re-runs the steps, this time succeeding. ~5 min for Rust/pycoverm to compile.
+4. Send the reply. Peek closes; vamb session goes back to 🟡 working.
+5. Vamb's Fleet agent edits the Dockerfile, rebuilds, smoke-tests, runs on STRONG100. ~5 min.
 
-### Beat 6 — Batch 2 dispatch (~automatic)
-- Claude noticed Batch 1 completed; it auto-dispatches Batch 2.
-- `/agents` shows the next 8 sub-agents.
-- mostly clean (all cached images at this point); ~5–10 min.
-
-### Beat 7 — Wave 1 done (~30 s)
-When all 16 are done, prompt:
+### Beat 6 — Second planned-block: TAXVAMB (~3–5 min real-time)
+Same pattern as vamb. Paste from postmortem Planned-block #2:
 
 ```
-Wave 1 complete? Run scripts/finalize_wave1.sh to merge all wave1/<tool>
-sub-branches into the wave1 branch in deterministic order. Then verify
-output/wave1/*/bins.parquet count is 16.
+Replace docker/taxvamb/Dockerfile with this content, then rebuild:
+
+FROM biokea-binner-base:1.0
+USER root
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+    && . "$HOME/.cargo/env"
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN pip install --no-cache-dir maturin
+RUN pip install --no-cache-dir "vamb>=5"
+WORKDIR /work
 ```
 
-Claude runs the script. ~30 sec.
+Optional narration: *"Same fix as vamb — taxvamb shares the pycoverm dep."*
 
-### Beat 8 — Wave 2 (~5–15 min)
-Prompt:
+### Beat 7 — One full attach (~30s)
+- For variety: pick any session that's still 🟡 working (e.g., comebin or graphmb).
+- Press `enter` to attach to its full transcript.
+- Show ~10 lines of the binner's actual run output (parsing GFA, k-mer count, etc.).
+- Press `escape` (or whatever detaches) to return to the table.
+- Caption: *"Sometimes you want the full transcript. `enter` attaches, `escape` returns."*
 
+### Beat 8 — Cross-platform B-roll (~15–20s, optional)
+- Open Web view (`https://claude.com/code` or wherever the Fleets web UI lives).
+- Show the SAME 16 sessions in the browser. Then phone if you have remote-control on (per spec D14).
+- Caption: *"Same fleet, anywhere."*
+- Cut back to terminal.
+
+### Beat 9 — Wave 1 complete (~30s)
+When all 16 are 🟢:
 ```
-Now Wave 2 — the 4 refiners. Dispatch 4 sub-agents in parallel for:
-das_tool, metawrap, magscot, binette. Each reads the unified Wave 1 output
-(output/wave1/*/bins.parquet) and produces refined bins at
-output/wave2/<refiner>/bins.parquet. Use the integrate-binner skill.
+[Window 1]  ls output/wave1/*/bins.parquet | wc -l    # → 16
+            bash scripts/finalize_wave1.sh
 ```
+- Output shows sub-branches merging into `wave1` in deterministic order.
+- Caption: *"16 binners → 16 parquet files → one branch."*
 
-Show /agents twice during this — once when sub-agents appear, once when they're nearly done.
-
-### Beat 9 — Wave 3 (~30 s)
-Prompt:
-
+### Beat 10 — Dispatch Wave 2 (~1 min, then 5–15 min wait)
 ```
-Now Wave 3 — biokea's v0 ensembler. Run scripts/dispatch_wave3.sh. This
-runs biokea/ensemble.py against the Wave 1 output and produces
-output/wave3/biokea-v0/bins.parquet.
+[Window 1]  bash scripts/dispatch_wave2.sh
 ```
+- 4 refiner sessions appear in Window 2's table.
+- Caption: *"Wave 2: 4 refiners reading Wave 1's unified output."*
+- Wait for all 4 to go 🟢. Time-lapse in edit.
 
-### Beat 10 — Score reveal (~1 min, THE CLOSING SHOT)
-Prompt:
-
+### Beat 11 — Wave 3: biokea v0 (~30s)
 ```
-Final step — score the leaderboard. Run .venv/bin/python scripts/score.py
-and open output/score/leaderboard.png.
+[Window 1]  bash scripts/dispatch_wave3.sh
 ```
+- Single line: `biokea-v0 produced N bins from M contig assignments`.
+- Caption: *"Wave 3: biokea's ensembler runs on the same Wave 1 inputs."*
 
-When the leaderboard appears, narrate based on biokea-v0's position:
-- **On top of all 4 refiners**: *"biokea v0 leads. This is our starting point."*
-- **Competitive (within ~10% of best refiner)**: *"biokea v0 is competitive with state-of-the-art. The roadmap takes it from here."*
-- **Below all 4 refiners**: *"biokea v0 is the seed. Here's the field — every result you see came from one afternoon of integration."*
-
-### Beat 11 — Final flourish (~15 s)
-Prompt:
-
+### Beat 12 — Score reveal (~1 min — THE CLOSING SHOT)
 ```
-Merge wave1 into main and show the final repo state. Then we're done.
+[Window 1]  .venv/bin/python scripts/score.py
+            open output/score/leaderboard.png
 ```
+- Leaderboard PNG opens. biokea-v0 highlighted in red.
+- **If biokea-v0 is on top of the 4 refiners**: caption *"biokea v0 leads the field. This is our starting point."*
+- **If biokea-v0 is competitive (within ~10% of best refiner)**: caption *"biokea v0 is competitive with state-of-the-art refiners — and there's a roadmap from here."* (the spec's pre-committed honest-fallback wording)
+- **If biokea-v0 is well behind**: caption *"biokea v0 is the seed. Here's the field we're competing with — every result you see here came from one afternoon of integration."*
 
-Claude shows the merge + git log. Cut.
+### Beat 13 — Final flourish (~15s)
+```
+[Window 1]  git -C . merge wave1 --ff-only main
+            git push origin main
+            git log --oneline | head -25
+```
+- Show the commit history filling up. ~17 binner adapter commits + biokea v0.
+- Cut to fade.
 
 ---
 
-## 3. Post-record
+## 3. Post-record (off-camera)
 
 ```bash
-mv ~/Desktop/binner-fleets-demo-take2.mov ~/Desktop/binner-fleets-demo-take2-$(date +%Y%m%d-%H%M).mov
-ls output/score/leaderboard.{png,json}
+# Stop OBS / Cmd+Shift+5 recording
+# Stop the script(1) backup if running
+
+# Move artifacts
+mv ~/Desktop/binner-fleets-demo-take1.mov ~/Desktop/binner-fleets-demo-take1-$(date +%Y%m%d-%H%M).mov
+cp /tmp/binner-fleets-recording.cast ~/Desktop/  # backup transcript
+
+# Verify the leaderboard exists
+ls -la output/score/leaderboard.{png,json}
+
+# Final commit + push
 git status
+git add -A
+git commit -m "demo: complete take 1 (all 21 sessions + leaderboard)"
 git push origin main
 ```
 
 ---
 
-## 4. Recovery if things go sideways
+## 4. Recovery branches (if something goes sideways)
 
 | Symptom | What to do |
 |---|---|
-| `/agents` Running stays empty after the prompt | Claude isn't dispatching sub-agents. Re-prompt: "Please use your Task tool to dispatch one sub-agent per binner — I want to see them in /agents Running." |
-| A sub-agent in Batch 1 fails on something other than vamb/taxvamb | Reply in chat: "What's the error?" Claude reports. Most likely a CLI flag mismatch or missing data path — paste a corrected invocation in chat, sub-agent re-runs. |
-| Mac CPU/memory saturates badly | Pause: tell Claude "stop dispatching new sub-agents until current batch finishes." |
-| biokea v0 collapses on leaderboard | Use the honest-fallback narration. Don't fudge numbers. |
-| You drift off-script | The prompts above are checkpoints, not exact incantations. Improvise within the same flow: dispatch → watch → score. |
+| Wave 1 session that should be cached goes amber on a different error | Peek; if it's a CLI flag mismatch (e.g., metabat2 wants `-i` not `--input`), reply with the correct invocation. The Fleet agent retries. |
+| Skill not discovered (Wave 1 sessions never appear) | Stop recording. Verify `.claude/skills/integrate-binner/SKILL.md` exists; restart `claude` from the repo dir. Re-take. |
+| OBS / screen-record crashes mid-take | Keep going — `script` backup captures terminal text. You can re-shoot the visual portions later. |
+| biokea v0 leaderboard collapses | Use the honest-fallback narration. Don't pretend a number is something it isn't. |
+| Multiple sessions blocked simultaneously you don't expect | Peek the first one, paste a guess fix. If it's a category (e.g., another conda channel issue) the same fix applies to siblings. |
+| You lose your place in the runbook | Window 1 has the runbook open in your editor. Switch focus, find your beat, resume. |
 
 ---
 
 ## 5. Cheat-sheet (single screen, print this)
 
 ```
-WINDOW: claude  (in /Users/seanjungbluth/Desktop/binner-fleets-demo)
+WINDOW 1 (DISPATCHER)
+  bash scripts/dispatch_wave1.sh
+  # wait for all 16 done
+  bash scripts/finalize_wave1.sh
+  bash scripts/dispatch_wave2.sh
+  # wait for all 4 done
+  bash scripts/dispatch_wave3.sh
+  .venv/bin/python scripts/score.py
+  open output/score/leaderboard.png
 
-Slash commands:
-  /agents    → switch to ←/→ "Running" tab, see sub-agents live
-  Esc        → close /agents back to chat
+WINDOW 2 (claude agents)
+  claude agents
+  space    → peek session
+  enter    → attach to session
+  escape   → detach back to table
 
-The 4 prompts (in order):
-  1. Wave 1: integrate 16 binners in 2 batches of 8 (~30 min)
-  2. Vamb + taxvamb unblock fix (~5 min)
-  3. Wave 2: 4 refiners (~10 min)
-  4. Wave 3: biokea v0 + score reveal (~2 min)
-
-VAMB / TAXVAMB UNBLOCK FIX (paste when they fail):
-  Replace Dockerfile with:
-    FROM biokea-binner-base:1.0
-    USER root
-    RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && . "$HOME/.cargo/env"
-    ENV PATH="/root/.cargo/bin:${PATH}"
-    RUN pip install --no-cache-dir maturin
-    RUN pip install --no-cache-dir vamb        ← (taxvamb: "vamb>=5")
-    WORKDIR /work
+PLANNED-BLOCK FIXES (paste from docs/install-postmortems.md):
+  vamb     → rustup + maturin + pip install vamb
+  taxvamb  → rustup + maturin + pip install "vamb>=5"
 ```

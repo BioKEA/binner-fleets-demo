@@ -16,6 +16,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=4.1",
     "ruff>=0.3",
+    "jsonschema>=4.21",
 ]
 score = [
     "matplotlib>=3.8",

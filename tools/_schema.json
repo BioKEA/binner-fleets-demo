@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BinnerSpec",
+  "type": "object",
+  "required": ["name", "repo", "install", "cli", "output_format"],
+  "properties": {
+    "name": {"type": "string"},
+    "version": {"type": "string"},
+    "repo": {"type": "string", "format": "uri"},
+    "install": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": {"enum": ["conda", "pip", "git", "tarball"]},
+        "package": {"type": "string"},
+        "channel": {"type": "string"},
+        "url": {"type": "string"},
+        "extra": {"type": "string"}
+      }
+    },
+    "cli": {
+      "type": "object",
+      "required": ["pattern"],
+      "properties": {
+        "pattern": {"type": "string"},
+        "extra_inputs": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "output_format": {"enum": ["per_bin_fasta", "contig_to_bin_tsv", "clusters_tsv"]},
+    "base_image": {"enum": ["default", "torch", "python2-legacy"]},
+    "needs_assembly_graph": {"type": "boolean"},
+    "needs_taxonomy": {"type": "boolean"}
+  }
+}

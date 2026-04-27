@@ -13,5 +13,8 @@ RUN micromamba install -y -n base -c conda-forge -c bioconda \
     python=3.11 biopython pysam pyarrow polars pyyaml click pydantic \
     && micromamba clean --all --yes
 
+RUN printf 'channels:\n  - conda-forge\n  - bioconda\n' > /home/$MAMBA_USER/.mambarc \
+    && printf 'channels:\n  - conda-forge\n  - bioconda\n' > /root/.mambarc
+
 ENV PATH="/opt/conda/bin:${PATH}"
 WORKDIR /work
